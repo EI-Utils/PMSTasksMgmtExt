@@ -1,6 +1,6 @@
 <h1><img src="icons/icon-readme.png" alt="" width="40" align="center"> PMS Tasks Management</h1>
 
-Create PMS tasks from Bose Jira issues using an Edge or Chrome extension.
+Create PMS tasks from Jira issues using an Edge or Chrome extension.
 
 Screenshots below use illustrative sample data, not live Jira or PMS records.
 

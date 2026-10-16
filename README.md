@@ -49,7 +49,7 @@ open PMS ticket. Use **Refresh**
 to reload the list. For a Jira issue with no PMS ticket, click **Create** in the
 PMS status column to open the Create tab with that issue's details fetched.
 
-![Status tab with sample Jira issues and matching PMS tickets](pms-status-screenshot.png)
+![Status tab with sample Jira issues and matching PMS tickets](screenshots/pms-status-screenshot.png)
 
 ### Close
 

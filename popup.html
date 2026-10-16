@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #f8f9fa;
+      --surface: #ffffff;
+      --surface-alt: #f4f5f7;
+      --text: #172b4d;
+      --muted: #5e6c84;
+      --subtle: #6b778c;
+      --border: #dfe1e6;
+      --divider: #ebecf0;
+      --accent: #0052cc;
+      --accent-hover: #0747a6;
+      --focus: #4c9aff;
+      --focus-glow: rgba(76,154,255,0.2);
+      --danger: #de350b;
+      --success: #00875a;
+      --secondary-bg: #ebecf0;
+      --secondary-hover: #dfe1e6;
+      --disabled-bg: #a5b2c6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --page-bg: #161b22;
+        --surface: #0d1117;
+        --surface-alt: #21262d;
+        --text: #e6edf3;
+        --muted: #a1aab5;
+        --subtle: #b1bac4;
+        --border: #3d444d;
+        --divider: #30363d;
+        --accent: #79b8ff;
+        --accent-hover: #a2ceff;
+        --focus: #58a6ff;
+        --focus-glow: rgba(88,166,255,0.25);
+        --danger: #ff7b72;
+        --success: #3fb950;
+        --secondary-bg: #30363d;
+        --secondary-hover: #484f58;
+        --disabled-bg: #30363d;
+      }
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { width: 100%; min-width: 320px; max-width: 640px; margin: 0; padding: 14px; background: var(--page-bg); color: var(--text); font-size: 13px; }
+    h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--accent); display: flex; align-items: center; justify-content: space-between; }
+    .tabs-shell { padding: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+    .tab-list { display: flex; gap: 16px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+    .tab-button { padding: 7px 2px; color: var(--muted); background: transparent; border-bottom: 2px solid transparent; border-radius: 0; }
+    .tab-button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+    .tab-button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .access-bar { margin-bottom: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+    .access-bar .row { margin-bottom: 6px; }
+    .access-bar summary { cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--subtle); }
+    #accessSummaryState { margin-left: 4px; color: var(--success); font-weight: 600; text-transform: none; }
+    .access-bar[open] summary { margin-bottom: 6px; }
+    .access-body { margin-bottom: 6px; }
+    #pmsUrlInput { background: var(--surface-alt); color: var(--muted); cursor: default; }
+    #accessMessage { min-height: 14px; margin-top: 4px; color: var(--muted); font-size: 11px; }
+    #accessMessage[data-tone="error"] { color: var(--danger); }
+    #accessMessage[data-tone="success"] { color: var(--success); }
+    .status-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .status-toolbar h4 { margin: 0 0 3px; font-size: 12px; }
+    .wsr-controls { display: flex; align-items: end; gap: 8px; margin-bottom: 10px; }
+    .wsr-controls .form-group { flex: 1; margin: 0; }
+    .wsr-controls button { flex: 0 0 auto; }
+    #wsrMessage { min-height: 16px; margin-bottom: 6px; color: var(--muted); font-size: 11px; }
+    #jiraWorklogMessage { min-height: 16px; margin-bottom: 6px; color: var(--muted); font-size: 11px; }
+    #wsrSubjects { min-height: 100px; resize: vertical; font-family: Consolas, "Courier New", monospace; font-size: 11px; }
+    .wsr-subjects-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 4px; }
+    .wsr-subjects-toolbar label { margin: 0; }
+    #assignmentMessage { min-height: 14px; color: var(--muted); font-size: 11px; }
+    .table-wrap { max-height: 470px; overflow: auto; border: 2px solid var(--border); border-radius: 4px; background: var(--surface); }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 10px; }
+    th, td { padding: 6px 4px; border-bottom: 1px solid var(--divider); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+    th { position: sticky; top: 0; background: var(--surface-alt); color: var(--muted); font-weight: 700; }
+    th:nth-child(1) { width: 25%; }
+    th:nth-child(2) { width: 21%; }
+    th:nth-child(3) { width: 25%; }
+    th:nth-child(4) { width: 29%; }
+    #jiraWorklogRows th:nth-child(1) { width: 7%; }
+    #jiraWorklogRows th:nth-child(2) { width: 16%; }
+    #jiraWorklogRows th:nth-child(3) { width: 22%; }
+    #jiraWorklogRows th:nth-child(4) { width: 11%; }
+    #jiraWorklogRows th:nth-child(5) { width: 22%; }
+    #jiraWorklogRows th:nth-child(6) { width: 22%; }
+    #jiraWorklogRows input[type="checkbox"] { width: auto; margin: 0; }
+    #jiraWorklogMessage[data-tone="error"], .pms-log-result[data-tone="error"] { color: var(--danger); }
+    #jiraWorklogMessage[data-tone="success"], .pms-log-result[data-tone="success"] { color: var(--success); }
+    .pms-log-result { color: var(--muted); }
+    .warning-note { margin-bottom: 10px; padding: 6px 8px; border: 1px solid var(--danger); border-left-width: 4px; border-radius: 4px; background: var(--surface); color: var(--text); font-size: 11px; line-height: 1.4; }
+    .warning-note strong { color: var(--danger); }
+    .missing-mark { color: var(--danger); font-size: 14px; font-weight: 700; }
+    .create-from-status { padding: 2px 8px; font-size: 10px; }
+    .ticket-link { color: var(--accent); text-decoration: none; }
+    .ticket-link:hover { text-decoration: underline; }
+    .jira-description { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.3; }
+    .pms-subject { display: block; margin: 2px 0 4px; color: var(--muted); font-size: 9px; line-height: 1.3; }
+    
+    .row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .form-group { margin-bottom: 8px; }
+    label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+    
+    input, select { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: var(--surface); color: var(--text); }
+    input:focus, select:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus-glow); }
+    
+    button { cursor: pointer; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; transition: background 0.15s; }
+    .btn-secondary { background: var(--secondary-bg); color: var(--text); padding: 6px 12px; white-space: nowrap; }
+    .btn-secondary:hover { background: var(--secondary-hover); }
+    .btn-secondary:disabled { color: var(--subtle); cursor: wait; }
+    
+    .btn-primary { width: 100%; background: var(--accent); color: #fff; padding: 10px; font-size: 13px; margin-top: 10px; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { background: var(--disabled-bg); cursor: not-allowed; }
+    
+    #status, #pmsStatus, #closeStatus { font-size: 11px; min-height: 15px; margin-bottom: 6px; color: var(--muted); }
+    #closeStatus[data-tone="error"] { color: var(--danger); }
+    #closeStatus[data-tone="success"] { color: var(--success); }
+    .close-ticket { font-size: 12px; min-height: 18px; }
+    .close-current-status { font-size: 11px; color: var(--muted); }
+    #closeCurrentStatus { color: var(--text); font-weight: 600; }
+    .close-source { display: flex; gap: 16px; margin: 0 0 8px; padding: 0; border: none; }
+    .close-source legend { float: left; margin-right: 4px; padding: 0; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); }
+    .close-source label { display: inline-flex; align-items: center; gap: 4px; margin: 0; font-size: 12px; font-weight: 400; text-transform: none; color: var(--text); cursor: pointer; }
+    .close-source input { width: auto; margin: 0; }
+    #closeSpentHours { background: var(--surface-alt); color: var(--muted); }
+    #status[data-tone="error"], #pmsStatus[data-tone="error"] { color: var(--danger); }
+    #status[data-tone="success"], #pmsStatus[data-tone="success"] { color: var(--success); }
+    #status[data-tone="muted"], #pmsStatus[data-tone="muted"] { color: var(--muted); }
+    .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--subtle); margin: 10px 0 4px 0; }
+  </style>
+</head>
+<body>
+  <h3>PMS Tasks Management</h3>
+
+  <details id="accessBar" class="access-bar" open>
+    <summary>Site access <span id="accessSummaryState"></span></summary>
+    <div class="access-body">
+      <label for="jiraUrlInput">Jira URL</label>
+      <div class="row">
+        <input type="url" id="jiraUrlInput" placeholder="https://your-company.atlassian.net" autocomplete="url">
+        <button id="accessBtn" class="btn-secondary" type="button">Grant access</button>
+      </div>
+      <label for="pmsUrlInput">PMS URL</label>
+      <input type="url" id="pmsUrlInput" value="https://sap-pms.einfochips.com" readonly>
+    </div>
+    <div id="accessMessage" role="status" aria-live="polite">Enter your Jira URL, then grant Jira and PMS access.</div>
+  </details>
+
+  <div class="form-group">
+    <label for="projectSelect">Project</label>
+    <select id="projectSelect" disabled><option value="">-- Loading --</option></select>
+  </div>
+  <div id="pmsStatus" role="status" aria-live="polite">Starting PMS connection...</div>
+
+  <div class="tabs-shell">
+  <div class="tab-list" role="tablist" aria-label="Task tools">
+    <button id="statusTab" class="tab-button" type="button" role="tab" aria-selected="true" aria-controls="statusPanel" tabindex="0">Status</button>
+    <button id="createTab" class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="createPanel" tabindex="-1">Create</button>
+    <button id="closeTab" class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="closePanel" tabindex="-1">Close</button>
+    <button id="wsrTab" class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="wsrPanel" tabindex="-1">WSR</button>
+    <button id="jiraWorklogTab" class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="jiraWorklogPanel" tabindex="-1">Jira work log</button>
+  </div>
+
+  <section id="createPanel" role="tabpanel" aria-labelledby="createTab" tabindex="0" hidden>
+  <!-- Jira Ticket Section -->
+  <label for="jiraKey">Jira Issue Key</label>
+  <div class="row">
+    <input type="text" id="jiraKey" placeholder="e.g. PROJ-1234">
+    <button id="fetchBtn" class="btn-secondary">Fetch</button>
+  </div>
+  <div id="status">Connecting to Jira...</div>
+
+  <!-- Task Details -->
+  <div class="form-group">
+    <label for="subject">Subject</label>
+    <input type="text" id="subject" placeholder="KEY : Title">
+  </div>
+
+  <div class="date-row">
+    <div class="form-group">
+      <label for="startDate">Start Date</label>
+      <input type="date" id="startDate">
+    </div>
+    <div class="form-group">
+      <label for="actualStartDate">Actual Start</label>
+      <input type="date" id="actualStartDate">
+    </div>
+  </div>
+
+  <div class="date-row">
+    <div class="form-group">
+      <label for="dueDate">Due Date</label>
+      <input type="date" id="dueDate">
+    </div>
+    <div class="form-group">
+      <label for="hours">Est. Hours</label>
+      <input type="number" id="hours" step="any" min="0" placeholder="0">
+    </div>
+  </div>
+
+  <!-- PMS API Dropdowns -->
+  <div class="section-title">PMS Project Fields</div>
+
+  <div class="form-group">
+    <label for="ownerSelect">Owner *</label>
+    <select id="ownerSelect" required><option value="">-- Loading --</option></select>
+  </div>
+
+  <div class="form-group">
+    <label for="taskStatusSelect">Status *</label>
+    <select id="taskStatusSelect" required disabled><option value="">-- Loading --</option></select>
+  </div>
+
+  <div class="date-row">
+    <div class="form-group">
+      <label for="versionSelect">Target Version *</label>
+      <select id="versionSelect" required><option value="">-- Loading --</option></select>
+    </div>
+    <div class="form-group">
+      <label for="categorySelect">Category *</label>
+      <select id="categorySelect" required><option value="">-- Loading --</option></select>
+    </div>
+  </div>
+
+  <button id="submitBtn" class="btn-primary" disabled>Create Task in PMS</button>
+  </section>
+
+  <section id="statusPanel" role="tabpanel" aria-labelledby="statusTab" tabindex="0">
+    <div class="status-toolbar">
+      <div>
+        <h4>My Assigned Tickets</h4>
+        <div id="assignmentMessage" role="status" aria-live="polite">Select Status to load assigned work.</div>
+      </div>
+      <button id="statusRefreshBtn" class="btn-secondary" type="button" title="Refresh assigned tickets" aria-label="Refresh assigned tickets">Refresh</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Jira</th>
+            <th scope="col">PMS ID</th>
+            <th scope="col">Jira status</th>
+            <th scope="col">PMS status</th>
+          </tr>
+        </thead>
+        <tbody id="assignmentRows">
+          <tr><td colspan="4">No data loaded.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="closePanel" role="tabpanel" aria-labelledby="closeTab" tabindex="0" hidden>
+    <fieldset class="close-source">
+      <legend>Find ticket by</legend>
+      <label><input type="radio" name="closeSource" id="closeSourceList" value="list" checked> PMS ticket list</label>
+      <label><input type="radio" name="closeSource" id="closeSourceJira" value="jira"> Jira ID</label>
+    </fieldset>
+    <div id="closeListSource">
+      <label for="closeTicketSelect">PMS Ticket</label>
+      <div class="row">
+        <select id="closeTicketSelect" disabled><option value="">-- Loading --</option></select>
+        <button id="closeRefreshBtn" class="btn-secondary" type="button" title="Refresh PMS tickets" aria-label="Refresh PMS tickets">Refresh</button>
+      </div>
+    </div>
+    <div id="closeJiraSource" hidden>
+      <label for="closeJiraKey">Jira Issue Key</label>
+      <div class="row">
+        <input type="text" id="closeJiraKey" placeholder="e.g. PROJ-1234">
+        <button id="closeFetchBtn" class="btn-secondary" type="button">Fetch</button>
+      </div>
+    </div>
+    <div id="closeStatus" role="status" aria-live="polite">Loading your open PMS tickets...</div>
+    <div class="form-group">
+      <div id="closeTicket" class="close-ticket" aria-label="Selected PMS ticket">&mdash;</div>
+      <div class="close-current-status">Current status: <span id="closeCurrentStatus">&mdash;</span></div>
+    </div>
+    <div class="date-row">
+      <div class="form-group">
+        <label for="closeDueDate">Due Date</label>
+        <input type="date" id="closeDueDate" disabled>
+      </div>
+      <div class="form-group">
+        <label for="closeActualEndDate">Actual End Date</label>
+        <input type="date" id="closeActualEndDate" disabled>
+      </div>
+    </div>
+    <div class="date-row">
+      <div class="form-group">
+        <label for="closeEstimatedHours">Estimated Time (h)</label>
+        <input type="number" id="closeEstimatedHours" step="any" min="0" disabled>
+      </div>
+      <div class="form-group">
+        <label for="closeSpentHours">Spent Time (h)</label>
+        <input type="text" id="closeSpentHours" readonly disabled>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="closeDoneRatio">Done %</label>
+      <input type="number" id="closeDoneRatio" step="10" min="0" max="100" value="100" disabled>
+    </div>
+    <button id="closeSubmitBtn" class="btn-primary" type="button" disabled>Close Ticket in PMS</button>
+  </section>
+
+  <section id="wsrPanel" role="tabpanel" aria-labelledby="wsrTab" tabindex="0" hidden>
+    <div class="wsr-controls">
+      <div class="form-group">
+        <label for="wsrStartDate">Week starts (Sunday)</label>
+        <input type="date" id="wsrStartDate" required>
+      </div>
+      <button id="wsrLoadBtn" class="btn-secondary" type="button">Load week</button>
+    </div>
+    <div id="wsrMessage" role="status" aria-live="polite">Choose a week and load its timesheet.</div>
+    <div class="wsr-subjects-toolbar">
+      <label for="wsrSubjects">Task subjects</label>
+      <button id="wsrCopyBtn" class="btn-secondary" type="button" disabled>Copy subjects</button>
+    </div>
+    <textarea id="wsrSubjects" rows="5" readonly aria-label="Weekly task subjects, one per line" placeholder="Task subjects will appear here, one per line."></textarea>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Project</th>
+            <th scope="col">PMS ticket</th>
+            <th scope="col">Hours</th>
+          </tr>
+        </thead>
+        <tbody id="wsrRows">
+          <tr><td colspan="4">No timesheet loaded.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="jiraWorklogPanel" role="tabpanel" aria-labelledby="jiraWorklogTab" tabindex="0" hidden>
+    <div class="warning-note" role="note"><strong>&#9888; Duplicates after reload:</strong> PMS is not checked for hours already logged. After reloading the week, previously logged entries can be logged again, so check PMS before re-logging.</div>
+    <div class="wsr-controls">
+      <div class="form-group">
+        <label for="jiraWorklogStartDate">Week starts (Sunday)</label>
+        <input type="date" id="jiraWorklogStartDate" required>
+      </div>
+      <button id="jiraWorklogLoadBtn" class="btn-secondary" type="button">Load week</button>
+    </div>
+    <div id="jiraWorklogMessage" role="status" aria-live="polite">Choose a week and load your Jira worklogs.</div>
+    <div class="wsr-subjects-toolbar">
+      <span class="section-title">Select entries to log in PMS</span>
+      <button id="jiraWorklogLogBtn" class="btn-secondary" type="button" disabled>Log hours in PMS</button>
+    </div>
+    <div class="table-wrap">
+      <table id="jiraWorklogRows">
+        <thead>
+          <tr>
+            <th scope="col"><input type="checkbox" id="jiraWorklogSelectAll" aria-label="Select all worklog entries" disabled></th>
+            <th scope="col">Started</th>
+            <th scope="col">Jira issue</th>
+            <th scope="col">Time</th>
+            <th scope="col">Comment</th>
+            <th scope="col">PMS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="6">No worklogs loaded.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

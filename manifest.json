@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PMS Tasks Management",
   "version": "3.0",
-  "description": "Manage PMS tasks from Bose Jira issues.",
+  "description": "Manage PMS tasks from Jira issues.",
   "incognito": "split",
   "icons": {
     "16": "icons/icon-16.png",

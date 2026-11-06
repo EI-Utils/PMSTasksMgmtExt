@@ -93,6 +93,9 @@ async function runPopupRegressionTests() {
       const url = String(input);
       requests.push({ url, options });
       const json = (data, status = 200) => new Response(JSON.stringify(data), { status });
+      if (mode === 'success' && url.includes('/rest/api/2/issue/')) {
+        return json({ fields: { summary: 'Next task', created: '2026-10-01', duedate: '2026-10-15', timeoriginalestimate: 7200 } });
+      }
       if (url.includes('GetProjectsByStatusAndUser')) {
         const body = JSON.parse(options.body);
         const projects = Array.from({ length: 12 }, (_, index) => ({ Id: 751 + index, Name: `Project ${index + 1}`, Identifier: `PROJECT_${751 + index}` }));
@@ -550,6 +553,7 @@ async function runPopupRegressionTests() {
     submitBtn.click();
     await settle(() => !submitting);
     check(posted.done_ratio === 0 && statusDiv.innerText.includes('Mock validation error'), 'In Progress posts default Done % as zero without a UI field');
+    check(subjectInput.value === 'TEST-1 : Task' && startDateInput.value === '2026-10-01' && actualStartDateInput.value === '2026-10-01' && dueDateInput.value === '2026-10-15' && hoursInput.value === '1.25' && pmsFieldSelects().every(select => select.value), 'Validation failure preserves all entered Create fields');
     await reset();
     let invalidDefaultsBlocked = false;
     try { resolvePmsWorkflow({ ...metadata(751), IssueStatus: { Data: [] } }); } catch (error) { invalidDefaultsBlocked = true; }
@@ -621,6 +625,7 @@ async function runPopupRegressionTests() {
       submitBtn.click();
       await settle(() => submissionLocked);
       check(submitBtn.disabled && !closed && !opened, `${failureMode} never claims navigated success or permits unsafe retry`);
+      check(subjectInput.value === 'TEST-1 : Task' && pmsFieldSelects().every(select => select.value), `${failureMode} preserves the ticket fields for review`);
     }
     await reset();
     mode = 'fallback';
@@ -628,12 +633,30 @@ async function runPopupRegressionTests() {
     await settle(() => opened);
     check(!closed, 'Search-confirmed creation keeps the sidebar open');
     check(opened.url === 'https://sap-pms.einfochips.com/issues/333458', 'Search confirms actual task instead of unrelated response ID');
+    check(!submissionLocked && subjectInput.value === 'TEST-1 : Task' && !fetchBtn.disabled, 'Search-confirmed creation preserves values and unlocks the form');
     await reset();
     mode = 'success';
+    const createFields = [jiraKeyInput, subjectInput, startDateInput, actualStartDateInput, dueDateInput, hoursInput, ...pmsFieldSelects()];
+    const createValues = createFields.map(input => input.value);
     submitBtn.click();
     await settle(() => opened);
-    check(!closed && submissionLocked && submitBtn.disabled, 'Successful creation keeps the sidebar open and prevents duplicate resubmission');
+    check(!closed && !submissionLocked && !submitBtn.disabled && !submitting, 'Successful creation keeps the sidebar open and unlocks creation');
     check(opened.active && opened.url.endsWith('/333458'), 'Verified issue response opens active task tab');
+    check(createFields.every((input, index) => input.value === createValues[index] && !input.disabled), 'Successful creation preserves and unlocks every Create field');
+    check(projectSelect.value === '751' && !projectSelect.disabled && pmsReady, 'Successful creation preserves the shared project and loaded metadata');
+    check(submitBtn.innerText === 'Create Task in PMS' && statusDiv.dataset.tone === 'success' && statusDiv.querySelector('a')?.textContent === '#333458', 'Success restores the Create button and keeps confirmation with the created ticket link');
+    const createPostCount = requests.filter(request => request.url.includes('BulkPostTicket')).length;
+    opened = null;
+    await loadAssignedWorkStatus();
+    statusTab.click();
+    assignmentRows.querySelector('.create-from-status').click();
+    await settle(() => !jiraLoading);
+    check(createTab.getAttribute('aria-selected') === 'true' && jiraKeyInput.value === 'JIRA-1002' && subjectInput.value === 'JIRA-1002 : Next task' && hoursInput.value === '2', 'After success, Status Create fetches and fills the next Jira ticket');
+    check(pmsFieldSelects().every((select, index) => select.value === createValues[index + 6]), 'Fetching the next ticket preserves the selected PMS fields');
+    submitBtn.click();
+    await settle(() => opened && !submitting && !submissionLocked);
+    check(requests.filter(request => request.url.includes('BulkPostTicket')).length === createPostCount + 1 && posted.subject === 'JIRA-1002 : Next task', 'A second ticket can be created from Status without reopening or resetting the sidebar');
+    check(subjectInput.value === 'JIRA-1002 : Next task' && createFields.every(input => !input.disabled), 'The second successful creation also preserves values and unlocks all Create fields');
     await reset();
     taskStatusSelect.value = '12';
     mode = 'nestedSuccess';
@@ -641,6 +664,7 @@ async function runPopupRegressionTests() {
     await settle(() => opened);
     check(!closed, 'Creation with selected status keeps the sidebar open');
     check(posted.status_id === 12, 'User-selected initial status is sent in BulkPostTicket payload');
+    check(!submissionLocked && taskStatusSelect.value === '12' && pmsFieldSelects().every(select => select.value && !select.disabled), 'Nested success also preserves and unlocks the selected status and other dropdowns');
     await reset();
     mode = 'nestedSuccess';
     const searchCountBefore = requests.filter(request => request.url.includes('SearchGlobal')).length;

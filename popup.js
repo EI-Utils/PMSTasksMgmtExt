@@ -2197,6 +2197,11 @@ submitBtn.addEventListener('click', async () => {
         statusDiv.innerText = 'Task confirmed in PMS. Opening task...';
         submitBtn.innerText = 'Success!';
         await chrome.tabs.create({ url: `https://sap-pms.einfochips.com/issues/${taskId}`, active: true });
+        jiraFailed = false;
+        submissionLocked = false;
+        submitBtn.innerText = 'Create Task in PMS';
+        setTextWithTicketLink(statusDiv, `Task #${taskId} created in PMS. Ready to create another ticket.`, taskId);
+        updateFormState();
       } catch (err) {
         showSubmissionError(`${err.message || 'Could not confirm the creation response.'} Check PMS before retrying; do not submit again yet.`, true);
       }
